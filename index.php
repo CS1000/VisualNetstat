@@ -11,8 +11,8 @@
 </style>
 <body onload="getLocation()">
   
-<script src="assets/d3.v3.min.js"></script>
-<script src="assets//topojson.v1.min.js"></script>
+<script src="assets/d3.v3.min.js" charset="utf-8"></script>
+<script src="assets/topojson.v1.min.js"></script>
 <script src="assets/datamaps.world.min.js"></script>
 <div id="connections"></div>
 
@@ -23,7 +23,11 @@
 
     $ipList = [];
     $output = '';
-    exec('netstat -W', $output);
+    
+    $args = '-W';
+    if (stripos(PHP_OS, 'Win')) $args = '-f';
+    
+    exec('netstat ' . $args, $output);
 
     $output = preg_grep('/\s+ESTABLISHED/', $output);
 
@@ -55,8 +59,8 @@ function gotUserCoords(position) {
         projection: 'mercator',
         height: 580,
         fills: {
-          defaultFill: '#ABDDA4',
-          dest: '#9872d1',
+          defaultFill: '#ABDDA4', 
+          dest: '#9872d1', 
           start: '#d3b15f'
         },
         
