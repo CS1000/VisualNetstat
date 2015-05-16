@@ -10,36 +10,60 @@
     }
 </style>
 <body onload="getLocation()">
-  
-<script src="assets/d3.v3.min.js" charset="utf-8"></script>
-<script src="assets/topojson.v1.min.js"></script>
-<script src="assets/datamaps.world.min.js"></script>
-<div id="connections"></div>
 
-<h1>Visual NetStat</h1>
-<pre><?php
+<?php 
     require_once 'assets/IP2Location.php';
     $loc = new IP2Location('databases/IP2LOCATION-LITE-DB5.BIN');
 
     $ipList = [];
-    $output = '';
-    
-    $args = '-W';
-    if (stripos(PHP_OS, 'Win')) $args = '-f';
-    
-    exec('netstat ' . $args, $output);
+?>  
 
-    $output = preg_grep('/\s+ESTABLISHED/', $output);
+<script src="assets/d3.v3.min.js" charset="utf-8"></script>
+<script src="assets/topojson.v1.min.js"></script>
+<script src="assets/datamaps.world.min.js"></script>
+
+<div id="connections"></div>
+
+<?php
+    
+    $output = '';
+    $heading = '<h1>Visual NetStat, Active Connections</h1>';
+    $regex_filer = '/\s+ESTABLISHED/'; 
+    $regex_match = '/\s+([^:]+):\S+\s+ESTABLISHED/'; 
+
+    if (stripos(PHP_OS, 'Win')) $cmd = 'netstat -f';
+    else { //netstat addon for *nix systems
+        $cmd = 'netstat -W';
+        if (isset($_GET['trace']) && $_GET['trace'] != '') {
+            
+            $trap = preg_replace('/[^a-z0-9.-]/i', '', $_GET['trace']);
+            if ($trap !== $_GET['trace']) die('Invalid.');
+
+            $heading = '<h1>Visual TraceRoute, ' . $_GET['trace'] . '</h1>';
+            $cmd = 'mtr -r -w -c 1 ' . $_GET['trace'] . '';
+            $regex_filer = '/\|--/'; 
+            $regex_match = '/\|--\s(\S+)\s/'; 
+        }
+    }
+
+    echo $heading, '<pre>';
+
+    exec($cmd, $output);
+
+    $output = preg_grep($regex_filer, $output);
 
     foreach ($output as $line) {
-        if (preg_match('/\s+([^:]+):\S+\s+ESTABLISHED/', $line, $matches) === 1) {
+        if (preg_match($regex_match, $line, $matches) === 1) {
             $ipList[$matches[1]] = 1;
         }
-        echo $line, "\n";
+        if (stripos(PHP_OS, 'Win')) echo $line;
+        else echo str_replace($matches[1], '<a href="?trace=' . $matches[1] . '">' . $matches[1] . '</a>', $line);
+        echo "\n";
     }
     
-    if (count($ipList) < 1) die("Couldn't get your established connections.")
-?></pre>
+    if (count($ipList) < 1) die("Could not read any connection status.")
+?>
+</pre>
 
 <script>
 
@@ -68,6 +92,7 @@ function gotUserCoords(position) {
       
     map.arc([
         <?php
+            $lastPos = ['position.coords.latitude', 'position.coords.longitude'];
             foreach ($ipList as $ip=>$nil) {
                 $record = $loc->lookup($ip, IP2Location::ALL);
                 
@@ -76,7 +101,12 @@ function gotUserCoords(position) {
                     continue;
                 }
 
-                echo "{ origin: {latitude: position.coords.latitude, longitude: position.coords.longitude}, \n";
+                if (isset($_GET['trace']) && $_GET['trace'] != '') {
+                    echo "{ origin: {latitude: " . $lastPos[0] . ", longitude: " . $lastPos[1] . "}, \n";
+                } else {
+                    echo "{ origin: {latitude: position.coords.latitude, longitude: position.coords.longitude}, \n";
+                }
+                
                 echo '  destination: {latitude: ' . $record->latitude . ', longitude: ' . $record->longitude . "}\n},\n";
                 $ipList[$ip] = [
                                  'loc' => $record->cityName . ', ' 
@@ -85,6 +115,7 @@ function gotUserCoords(position) {
                                  'lat' => $record->latitude,
                                  'lon' => $record->longitude
                                ];
+                $lastPos = [$record->latitude, $record->longitude];
             }
         ?>
     ], {strokeWidth: 1});
