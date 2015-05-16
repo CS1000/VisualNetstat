@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<style type="text/css">
+    h1 { font-size: 1.2em }
+    footer { font-size: 0.72em }
+    #connections {
+        position: relative; 
+        width: 96%; 
+        min-height: 520px
+    }
+</style>
 <body onload="getLocation()">
   
 <script src="assets/d3.v3.min.js"></script>
 <script src="assets//topojson.v1.min.js"></script>
 <script src="assets/datamaps.world.min.js"></script>
+<div id="connections"></div>
 
-<div id="connections" style="position: relative; width: 96%; min-height: 450px"></div>
-
+<h1>Visual NetStat</h1>
 <pre><?php
     require_once 'assets/IP2Location.php';
     $loc = new IP2Location('databases/IP2LOCATION-LITE-DB5.BIN');
@@ -44,10 +53,11 @@ function gotUserCoords(position) {
         scope: 'world',
         element: document.getElementById('connections'),
         projection: 'mercator',
-        height: 500,
+        height: 580,
         fills: {
           defaultFill: '#ABDDA4',
-          dest: '#9872d1'
+          dest: '#9872d1',
+          start: '#d3b15f'
         },
         
     });
@@ -85,6 +95,11 @@ function gotUserCoords(position) {
                echo "longitude: " . $data['lon'] . ", ";
                echo "radius: 4, fillKey: 'dest'}, \n";
            }
+           echo "{ip: '" . $_SERVER['SERVER_NAME'] . "', ";
+           echo "region: 'YOUR LOCATION', ";
+           echo "latitude: position.coords.latitude, ";
+           echo "longitude: position.coords.longitude, ";
+           echo "radius: 3, fillKey: 'start'}";
        ?>
     ], {
         popupTemplate: function(geo, data) {
@@ -93,5 +108,12 @@ function gotUserCoords(position) {
     });
 }
 </script>
+
+<footer>
+    <hr>
+    <p>This site or product includes IP2Location LITE data available from <a href="http://lite.ip2location.com">http://lite.ip2location.com</a></p>
+    <p>Many thanks to <a href="http://d3js.org/">D3js</a> and <a href="http://datamaps.github.io/">DataMaps</a> for releasing the open source code that powers this nice app!</p>
+</footer>
+
 </body>
 </html>
