@@ -18,7 +18,7 @@ Requires:
  - IP2Location DB5 or higher (geolocation)  
  - enough RAM for script execution (binary DB alone is ~50MB)  
 
-Tested on Linux, but Windows code should also run.  
+Tested on Linux and Windows, but `netstat` on Windows finishes slower.  
   
 Fast build for the IP2Location contest in the last hour.  
 Nightly addon: Trace Route for *NIX users on netstat listing.  
